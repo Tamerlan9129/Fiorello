@@ -6,6 +6,7 @@ namespace Fiorello.ViewModels.Account
     {
         [Required,MaxLength(50)]
         public string Fullname { get; set; }
+
         [Required,MaxLength(50)]
         public string Username { get; set; }
 

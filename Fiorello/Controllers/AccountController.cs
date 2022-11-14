@@ -1,4 +1,5 @@
-﻿using Fiorello.Models;
+﻿using Fiorello.Attributes;
+using Fiorello.Models;
 using Fiorello.ViewModels.Account;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +11,13 @@ namespace Fiorello.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
 
-        public AccountController(UserManager<User> userManager,SignInManager<User> signInManager)
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
         }
         [HttpGet]
+        [OnlyAnonymous]
         public IActionResult Register()
         {
             return View();
@@ -34,7 +36,7 @@ namespace Fiorello.Controllers
                 UserName = model.Username
             };
 
-            var result = await _userManager.CreateAsync(user,model.Password);
+            var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
             {
                 foreach (var error in result.Errors)
@@ -50,6 +52,7 @@ namespace Fiorello.Controllers
         }
 
         [HttpGet]
+        [OnlyAnonymous]
 
         public async Task<IActionResult> Login()
         {
@@ -76,7 +79,15 @@ namespace Fiorello.Controllers
                 ModelState.AddModelError(string.Empty, "Username or Password is incorrect");
                 return View(model);
             }
-            return RedirectToAction("index", "home");
+            if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+            {
+                return RedirectToAction(model.ReturnUrl);
+            }
+            else
+            {
+
+                return RedirectToAction("index", "home");
+            }
 
         }
 

@@ -18,7 +18,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireLowercase = true;
 
     options.User.RequireUniqueEmail = true;
-    options.Lockout.MaxFailedAccessAttempts = 3;
+    options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(3);
 })
      .AddEntityFrameworkStores<AppDbContext>();
@@ -26,14 +26,23 @@ var app = builder.Build();
 
 app.MapControllerRoute(
             name: "areas",
-            pattern: "{area:exists}/{controller=dashboard}/{action=Index}/{id?}"
+            pattern: "{area:exists}/{controller=account}/{action=login}/{id?}"
           );
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=home}/{action=Index}/{id?}"
     );
 
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles();   
+
+var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+using (var scope = scopeFactory.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetService<UserManager<User>>();
+    var roleManager = scope.ServiceProvider.GetService<RoleManager<IdentityRole>>();
+    await DbInitializer.SeedAsync(userManager, roleManager);
+} 
 app.Run();
